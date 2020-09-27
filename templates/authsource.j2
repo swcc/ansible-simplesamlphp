@@ -1,0 +1,6 @@
+    '{{ simplesamlphp_identity_provider.auth.name }}' => [
+      '{{ simplesamlphp_identity_provider.auth.type }}',
+{% for key, value in simplesamlphp_identity_provider.auth.config.items() %}
+      '{{ key }}' => '{{ value }}',
+{% endfor %}
+    ],

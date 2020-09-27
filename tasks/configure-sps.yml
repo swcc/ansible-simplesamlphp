@@ -1,0 +1,5 @@
+---
+- name: Configure service providers
+  template:
+    src: saml20-sp-remote.php.j2
+    dest: "{{ simplesamlphp_destination }}/simplesamlphp/metadata/saml20-sp-remote.php"

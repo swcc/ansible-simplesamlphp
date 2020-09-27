@@ -1,0 +1,51 @@
+---
+- hosts: localhost
+  become: yes
+  roles:
+    - role: simplesamlphp
+      vars:
+        php_fpm_version: 7.4
+        simplesamlphp_identity_provider:
+          cert:
+            name: example.org
+            country_code: FR
+            state: IdF
+            city: Paris
+            org_name: Example
+            common_name: example.org
+          auth:
+            name: discourse-sql
+            type: sqlauth:SQL
+            config:
+              dsn: 'pgsql:host=forum.example.org;port=5432;dbname=discourse'
+              username: 'discourse'
+              password: 'discourse'
+              query: "SELECT username AS uid, name, email FROM users LEFT JOIN user_emails ON user_emails.user_id = users.id WHERE username = :username AND decode(password_hash, \\'hex\\') = PBKDF2(decode(salt, \\'escape\\'), :password, 64000, 32, \\'sha256\\')"
+        simplesamlphp_service_providers:
+          - key: 'https://nextcloud.example.org/apps/user_saml/saml/metadata'
+            metadata: |
+              [
+                  'entityid' => 'https://nextcloud.example.org/apps/user_saml/saml/metadata',
+                  'metadata-set' => 'saml20-sp-remote',
+                  'attributes' => [
+                    'uid',
+                    'name',
+                    'email',
+                  ],
+                  'AssertionConsumerService' => [
+                    [
+                      'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST',
+                      'Location' => 'https://nextcloud.example.org/apps/user_saml/saml/acs',
+                      'index' => 1,
+                    ],
+                  ],
+                  'SingleLogoutService' => [
+                    [
+                      'Binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
+                      'Location' => 'https://nextcloud.example.org/apps/user_saml/saml/sls',
+                    ],
+                  ],
+                  'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
+                  'validate.authnrequest' => false,
+                  'saml20.sign.assertion' => false,
+              ];

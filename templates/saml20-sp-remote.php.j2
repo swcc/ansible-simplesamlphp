@@ -1,0 +1,13 @@
+<?php
+// {{ ansible_managed }}
+
+/**
+ * SAML 2.0 remote SP metadata for SimpleSAMLphp.
+ *
+ * See: https://simplesamlphp.org/docs/stable/simplesamlphp-reference-sp-remote
+ */
+{% for sp in simplesamlphp_service_providers %}
+// Use your simplesamlphp instance metadata converter from an SP XML metadata file
+// Available at https://auth.example.org/admin/metadata-converter.php
+$metadata['{{ sp.key }}'] = {{ sp.metadata }}
+{% endfor %}

@@ -1,0 +1,50 @@
+---
+- name: Enable SAML 2.0 IdP support
+  lineinfile:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/config/config.php"
+    regexp: "^(.*)'enable.saml20-idp' => (false|true),"
+    line: "\\1'enable.saml20-idp' => true,"
+    backrefs: yes
+
+- name: Define authentication module
+  set_fact:
+    simplesamlphp_authsource: "{{ lookup('template', 'templates/authsource.j2') }}"
+
+- name: Add authentication module
+  blockinfile:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/config/authsources.php"
+    insertafter: '    \*\/'
+    marker: "    /* {mark} ANSIBLE MANAGED BLOCK */"
+    block: "{{ simplesamlphp_authsource }}"
+
+- name: Enable authentication module
+  file:
+    state: touch
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/modules/{{ simplesamlphp_identity_provider.auth.type.split(':')|first }}/enable"
+
+- name: Create self-signed certificate
+  command: "openssl req -newkey rsa:3072 -new -x509 -days 3652 -nodes -out cert/{{ simplesamlphp_identity_provider.cert.name }}.crt -keyout cert/{{ simplesamlphp_identity_provider.cert.name }}.pem -subj '/C={{ simplesamlphp_identity_provider.cert.country_code }}/ST={{ simplesamlphp_identity_provider.cert.state }}/L={{ simplesamlphp_identity_provider.cert.city }}/O={{ simplesamlphp_identity_provider.cert.org_name }}/OU=/CN={{ simplesamlphp_identity_provider.cert.common_name }}'"
+  args:
+    chdir: "{{ simplesamlphp_destination }}/simplesamlphp/"
+    creates: "cert/{{ simplesamlphp_identity_provider.cert.name }}.pem"
+
+- name: Configure private key of hosted IdP
+  lineinfile:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/metadata/saml20-idp-hosted.php"
+    regexp: "^(.*)'privatekey' => '.*',$"
+    line: "\\1'privatekey' => '{{ simplesamlphp_identity_provider.cert.name }}.pem',"
+    backrefs: yes
+
+- name: Configure certificate of hosted IdP
+  lineinfile:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/metadata/saml20-idp-hosted.php"
+    regexp: "^(.*)'certificate' => '.*',$"
+    line: "\\1'certificate' => '{{ simplesamlphp_identity_provider.cert.name }}.crt',"
+    backrefs: yes
+
+- name: Configure authentication source of hosted IdP
+  lineinfile:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/metadata/saml20-idp-hosted.php"
+    regexp: "^(.*)'auth' => '.*',$"
+    line: "\\1'auth' => '{{ simplesamlphp_identity_provider.auth.name }}',"
+    backrefs: yes

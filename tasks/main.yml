@@ -1,0 +1,65 @@
+---
+# https://simplesamlphp.org/docs/stable/simplesamlphp-install#section_1
+- name: Install list of prerequired php modules
+  apt:
+    name:
+      - php-date
+      - php{{ php_fpm_version }}-curl
+      - php{{ php_fpm_version }}-dom
+      - php{{ php_fpm_version }}-xml
+      - php{{ php_fpm_version }}-json
+      - php{{ php_fpm_version }}-mbstring
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Make sure destination folder exists
+  file:
+    path: "{{ simplesamlphp_destination }}"
+    state: directory
+    owner: "{{ simplesamlphp_dir_user }}"
+    group: "{{ simplesamlphp_dir_group }}"
+
+- name: Set download url
+  set_fact:
+    simplesamlephp_source_url: "https://simplesamlphp.org/download?latest"
+  when: simplesamlphp_version == 'latest'
+
+- name: Set download url
+  set_fact:
+    simplesamlephp_source_url: "https://github.com/simplesamlphp/simplesamlphp/releases/download/v{{ simplesamlphp_version}}/simplesamlphp-{{ simplesamlphp_version}}.tar.gz"
+  when: simplesamlphp_version != 'latest'
+
+- name: Ensure destination folder exists
+  file:
+    state: directory
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/"
+
+- name: Download simplesamlphp
+  unarchive:
+    src: "{{ simplesamlephp_source_url }}"
+    dest: "{{ simplesamlphp_destination }}/simplesamlphp/"
+    creates: "{{ simplesamlphp_destination }}/simplesamlphp/config/config.php"
+    extra_opts:
+      - --strip-components=1
+    remote_src: yes
+    owner: "{{ simplesamlphp_dir_user }}"
+    group: "{{ simplesamlphp_dir_group }}"
+
+- name: Configure local IDP
+  include: configure-idp.yml
+  when: simplesamlphp_identity_provider is defined
+
+- name: Configure remote SPs
+  include: configure-sps.yml
+  when: simplesamlphp_service_providers is defined
+
+- name: Ensure simplesamlphp is owned by '{{ simplesamlphp_dir_user }}'
+  file:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/{{ item }}/"
+    state: directory
+    recurse: yes
+    owner: "{{ simplesamlphp_dir_user }}"
+    group: "{{ simplesamlphp_dir_group }}"
+  loop:
+    - www
+    - cert

@@ -1,0 +1,5 @@
+---
+simplesamlphp_version: latest
+simplesamlphp_destination: /var/www
+simplesamlphp_dir_user: www-data
+simplesamlphp_dir_group: www-data
