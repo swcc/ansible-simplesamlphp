@@ -21,6 +21,8 @@
   file:
     state: touch
     path: "{{ simplesamlphp_destination }}/simplesamlphp/modules/{{ simplesamlphp_identity_provider.auth.type.split(':')|first }}/enable"
+    modification_time: preserve
+    access_time: preserve
 
 - name: Create self-signed certificate
   command: "openssl req -newkey rsa:3072 -new -x509 -days 3652 -nodes -out cert/{{ simplesamlphp_identity_provider.cert.name }}.crt -keyout cert/{{ simplesamlphp_identity_provider.cert.name }}.pem -subj '/C={{ simplesamlphp_identity_provider.cert.country_code }}/ST={{ simplesamlphp_identity_provider.cert.state }}/L={{ simplesamlphp_identity_provider.cert.city }}/O={{ simplesamlphp_identity_provider.cert.org_name }}/OU=/CN={{ simplesamlphp_identity_provider.cert.common_name }}'"
