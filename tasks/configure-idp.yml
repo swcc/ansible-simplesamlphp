@@ -17,6 +17,13 @@
     marker: "    /* {mark} ANSIBLE MANAGED BLOCK */"
     block: "{{ simplesamlphp_authsource }}"
 
+- name: Install extra authentication module for Discourse
+  git:
+    repo: 'https://github.com/swcc/simplesamlphp-module-authdiscourse.git'
+    dest: "{{ simplesamlphp_destination }}/simplesamlphp/modules/{{ simplesamlphp_identity_provider.auth.type.split(':')|first }}"
+    force: yes
+  when: simplesamlphp_identity_provider.auth.type == 'authdiscourse:Discourse'
+
 - name: Enable authentication module
   file:
     state: touch
