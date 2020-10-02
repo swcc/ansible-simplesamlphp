@@ -57,3 +57,11 @@
     regexp: "^(.*)'auth' => '.*',$"
     line: "\\1'auth' => '{{ simplesamlphp_identity_provider.auth.name }}',"
     backrefs: yes
+
+- name: Configure extra idp settings
+  blockinfile:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/metadata/saml20-idp-hosted.php"
+    insertbefore: '^\];$'
+    block: "{{ simplesamlphp_identity_provider.extra_config }}"
+    marker: "    /* {mark} ANSIBLE MANAGED BLOCK */"
+  when: simplesamlphp_identity_provider.extra_config is defined
