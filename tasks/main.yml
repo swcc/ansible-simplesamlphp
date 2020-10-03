@@ -45,6 +45,14 @@
     owner: "{{ simplesamlphp_dir_user }}"
     group: "{{ simplesamlphp_dir_group }}"
 
+- name: Configure simplesaml
+  lineinfile:
+    path: "{{ simplesamlphp_destination }}/simplesamlphp/config/config.php"
+    regexp: "^(.*)'{{ item.key }}' => '.*',$"
+    line: "\\1'{{ item.key }}' => '{{ item.value }}',"
+    backrefs: yes
+  loop: "{{ simplesamlphp_config|default({})|dict2items }}"
+
 - name: Configure local IDP
   include: configure-idp.yml
   when: simplesamlphp_identity_provider is defined
